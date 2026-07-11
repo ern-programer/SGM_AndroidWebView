@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"name": "SGM Android WebView",
+			"path": "."
+		}
+	],
+	"settings": {
+		"java.configuration.updateBuildConfiguration": "automatic",
+		"java.import.gradle.enabled": true,
+		"files.exclude": {
+			"**/.gradle": true,
+			"**/build": true,
+			"**/.idea": true
+		}
+	}
+}
