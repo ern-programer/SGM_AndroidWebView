@@ -1,14 +1,18 @@
 package com.gammasys.sgm;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
-import android.view.WindowManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -20,11 +24,17 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -35,7 +45,9 @@ public class MainActivity extends AppCompatActivity {
     private SwipeRefreshLayout swipeRefresh;
     private SharedPreferences prefs;
 
-    private static final String DEFAULT_URL = "http://192.168.0.113:3000";
+    private static final String DEFAULT_IP = "192.168.0.113";
+    private static final String DEFAULT_PORT = "3000";
+    private static final int REQUEST_LOCATION = 1001;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,7 +84,19 @@ public class MainActivity extends AppCompatActivity {
         });
 
         setupWebView();
-        loadUrl();
+
+        // Pedir permiso de ubicación para detectar WiFi (Android 6+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
+            } else {
+                loadUrl();
+            }
+        } else {
+            loadUrl();
+        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -123,8 +147,8 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        String ip = prefs.getString("server_ip", DEFAULT_URL.replace("http://", "").replace(":3000", ""));
-        String port = prefs.getString("server_port", "3000");
+        String ip = getIpForCurrentNetwork();
+        String port = prefs.getString("server_port", DEFAULT_PORT);
         String protocol = prefs.getString("server_protocol", "http");
         String url = protocol + "://" + ip + ":" + port;
 
@@ -150,6 +174,64 @@ public class MainActivity extends AppCompatActivity {
         if (cm == null) return false;
         NetworkInfo info = cm.getActiveNetworkInfo();
         return info != null && info.isConnected();
+    }
+
+    /**
+     * Obtiene la IP guardada para la red WiFi actual.
+     * Si no hay IP guardada para esta red, usa la IP global o el default.
+     */
+    private String getIpForCurrentNetwork() {
+        String ssid = getCurrentSsid();
+
+        // Buscar IP guardada para este SSID
+        if (ssid != null) {
+            try {
+                String ssidMapJson = prefs.getString("ssid_ips", "{}");
+                JSONObject ssidMap = new JSONObject(ssidMapJson);
+                if (ssidMap.has(ssid)) {
+                    return ssidMap.getString(ssid);
+                }
+            } catch (JSONException e) {
+                // Mapa corrupto, usar default
+            }
+        }
+
+        // Fallback: IP global guardada o default
+        return prefs.getString("server_ip", DEFAULT_IP);
+    }
+
+    /**
+     * Detecta el SSID de la red WiFi conectada.
+     * Requiere permiso ACCESS_FINE_LOCATION en Android 8.1+.
+     * Retorna null si no se puede determinar.
+     */
+    @SuppressLint("MissingPermission")
+    private String getCurrentSsid() {
+        try {
+            WifiManager wm = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+            if (wm == null) return null;
+            WifiInfo info = wm.getConnectionInfo();
+            if (info == null) return null;
+            String ssid = info.getSSID();
+            if (ssid == null || ssid.equals("<unknown ssid>") || ssid.equals("0x")) {
+                return null;
+            }
+            // Quitar comillas envolventes
+            if (ssid.startsWith("\"") && ssid.endsWith("\"")) {
+                ssid = ssid.substring(1, ssid.length() - 1);
+            }
+            return ssid;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_LOCATION) {
+            loadUrl(); // Cargar con o sin permiso
+        }
     }
 
     @Override
