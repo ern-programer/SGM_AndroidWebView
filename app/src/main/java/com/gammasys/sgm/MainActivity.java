@@ -8,6 +8,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.view.View;
+import android.view.WindowManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -20,6 +21,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 public class MainActivity extends AppCompatActivity {
@@ -36,11 +40,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Set fullscreen mode
-        getWindow().setFlags(
-            android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN,
-            android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN
-        );
+        // Modo inmersivo: ocultar barra de estado y navegación
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        WindowInsetsControllerCompat controller =
+            new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
+        controller.hide(WindowInsetsCompat.Type.systemBars());
+        controller.setSystemBarsBehavior(
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
         setContentView(R.layout.activity_main);
 
         prefs = getSharedPreferences("sgm_prefs", MODE_PRIVATE);
@@ -119,7 +125,8 @@ public class MainActivity extends AppCompatActivity {
 
         String ip = prefs.getString("server_ip", DEFAULT_URL.replace("http://", "").replace(":3000", ""));
         String port = prefs.getString("server_port", "3000");
-        String url = "http://" + ip + ":" + port;
+        String protocol = prefs.getString("server_protocol", "http");
+        String url = protocol + "://" + ip + ":" + port;
 
         webView.setVisibility(View.VISIBLE);
         errorLayout.setVisibility(View.GONE);

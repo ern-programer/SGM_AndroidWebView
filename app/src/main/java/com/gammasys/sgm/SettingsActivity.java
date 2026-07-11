@@ -4,6 +4,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -11,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public class SettingsActivity extends AppCompatActivity {
 
     private EditText editIp, editPort;
+    private Switch switchProtocol;
     private SharedPreferences prefs;
 
     private static final String DEFAULT_IP = "192.168.0.113";
@@ -25,12 +27,14 @@ public class SettingsActivity extends AppCompatActivity {
 
         editIp = findViewById(R.id.editIp);
         editPort = findViewById(R.id.editPort);
+        switchProtocol = findViewById(R.id.switchProtocol);
         Button btnSave = findViewById(R.id.btnSave);
         Button btnDefault = findViewById(R.id.btnDefault);
 
         // Cargar valores actuales
         editIp.setText(prefs.getString("server_ip", DEFAULT_IP));
         editPort.setText(prefs.getString("server_port", DEFAULT_PORT));
+        switchProtocol.setChecked(prefs.getString("server_protocol", "http").equals("https"));
 
         btnSave.setOnClickListener(v -> {
             String ip = editIp.getText().toString().trim();
@@ -45,9 +49,12 @@ public class SettingsActivity extends AppCompatActivity {
                 return;
             }
 
+            String protocol = switchProtocol.isChecked() ? "https" : "http";
+
             prefs.edit()
                 .putString("server_ip", ip)
                 .putString("server_port", port)
+                .putString("server_protocol", protocol)
                 .apply();
 
             Toast.makeText(this, "✅ Configuración guardada", Toast.LENGTH_SHORT).show();
@@ -57,6 +64,7 @@ public class SettingsActivity extends AppCompatActivity {
         btnDefault.setOnClickListener(v -> {
             editIp.setText(DEFAULT_IP);
             editPort.setText(DEFAULT_PORT);
+            switchProtocol.setChecked(false);
         });
     }
 }
