@@ -20,6 +20,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -27,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout errorLayout;
     private ProgressBar progressBar;
     private TextView errorText;
+    private SwipeRefreshLayout swipeRefresh;
     private SharedPreferences prefs;
 
     private static final String DEFAULT_URL = "http://192.168.0.113:3000";
@@ -47,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
         errorLayout = findViewById(R.id.errorLayout);
         progressBar = findViewById(R.id.progressBar);
         errorText = findViewById(R.id.errorText);
+        swipeRefresh = findViewById(R.id.swipeRefresh);
 
         Button btnRetry = findViewById(R.id.btnRetry);
         Button btnSettings = findViewById(R.id.btnSettings);
@@ -55,6 +58,12 @@ public class MainActivity extends AppCompatActivity {
         btnRetry.setOnClickListener(v -> loadUrl());
         btnSettings.setOnClickListener(v -> openSettings());
         btnSettingsError.setOnClickListener(v -> openSettings());
+
+        // Pull-to-refresh: recargar WebView al arrastrar hacia abajo
+        swipeRefresh.setColorSchemeResources(R.color.primary);
+        swipeRefresh.setOnRefreshListener(() -> {
+            webView.reload();
+        });
 
         setupWebView();
         loadUrl();
@@ -87,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 progressBar.setVisibility(View.GONE);
+                swipeRefresh.setRefreshing(false);
             }
 
             @Override
