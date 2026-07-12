@@ -3,6 +3,7 @@ package com.gammasys.sgm;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -10,6 +11,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -43,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private TextView errorText;
     private SwipeRefreshLayout swipeRefresh;
+    private TextView batteryPill;
     private SharedPreferences prefs;
 
     private static final String DEFAULT_IP = "192.168.0.113";
@@ -68,6 +71,9 @@ public class MainActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
         errorText = findViewById(R.id.errorText);
         swipeRefresh = findViewById(R.id.swipeRefresh);
+        batteryPill = findViewById(R.id.batteryPill);
+
+        updateBattery();
 
         Button btnRetry = findViewById(R.id.btnRetry);
         Button btnSettings = findViewById(R.id.btnSettings);
@@ -248,5 +254,21 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         // Recargar si se volvió de settings
         loadUrl();
+        updateBattery();
+    }
+
+    private void updateBattery() {
+        IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent batteryStatus = registerReceiver(null, filter);
+        if (batteryStatus != null) {
+            int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+            int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+            int pct = (int) ((level / (float) scale) * 100);
+            int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+            boolean charging = status == BatteryManager.BATTERY_STATUS_CHARGING
+                    || status == BatteryManager.BATTERY_STATUS_FULL;
+            String icon = charging ? "⚡" : (pct > 50 ? "🔋" : (pct > 20 ? "🪫" : "🪫"));
+            batteryPill.setText(icon + " " + pct + "%");
+        }
     }
 }
