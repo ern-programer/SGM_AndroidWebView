@@ -19,7 +19,7 @@ import org.json.JSONObject;
 public class SettingsActivity extends AppCompatActivity {
 
     private EditText editIp, editPort;
-    private Switch switchProtocol;
+    private Switch switchProtocol, switchPill;
     private TextView textSsid;
     private SharedPreferences prefs;
     private String currentSsid;
@@ -37,6 +37,7 @@ public class SettingsActivity extends AppCompatActivity {
         editIp = findViewById(R.id.editIp);
         editPort = findViewById(R.id.editPort);
         switchProtocol = findViewById(R.id.switchProtocol);
+        switchPill = findViewById(R.id.switchPill);
         textSsid = findViewById(R.id.textSsid);
         Button btnSave = findViewById(R.id.btnSave);
         Button btnDefault = findViewById(R.id.btnDefault);
@@ -54,6 +55,7 @@ public class SettingsActivity extends AppCompatActivity {
         editIp.setText(ip);
         editPort.setText(prefs.getString("server_port", DEFAULT_PORT));
         switchProtocol.setChecked(prefs.getString("server_protocol", "http").equals("https"));
+        switchPill.setChecked(prefs.getBoolean("show_status_pill", true));
 
         btnSave.setOnClickListener(v -> {
             String newIp = editIp.getText().toString().trim();
@@ -69,6 +71,7 @@ public class SettingsActivity extends AppCompatActivity {
             }
 
             String protocol = switchProtocol.isChecked() ? "https" : "http";
+            boolean showPill = switchPill.isChecked();
 
             // Guardar IP para esta red WiFi específica
             if (currentSsid != null) {
@@ -80,6 +83,7 @@ public class SettingsActivity extends AppCompatActivity {
                 .putString("server_ip", newIp)
                 .putString("server_port", port)
                 .putString("server_protocol", protocol)
+                .putBoolean("show_status_pill", showPill)
                 .apply();
 
             Toast.makeText(this, "✅ Configuración guardada", Toast.LENGTH_SHORT).show();
@@ -90,6 +94,7 @@ public class SettingsActivity extends AppCompatActivity {
             editIp.setText(DEFAULT_IP);
             editPort.setText(DEFAULT_PORT);
             switchProtocol.setChecked(false);
+            switchPill.setChecked(true);
         });
     }
 

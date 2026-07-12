@@ -81,6 +81,9 @@ public class MainActivity extends AppCompatActivity {
         updateStatusPill();
         setupDraggablePill();
 
+        // Mostrar/ocultar pill según preferencia
+        statusPill.setVisibility(prefs.getBoolean("show_status_pill", true) ? View.VISIBLE : View.GONE);
+
         // Actualizar hora cada 30 segundos
         clockHandler = new Handler(Looper.getMainLooper());
         clockRunnable = new Runnable() {
@@ -272,6 +275,8 @@ public class MainActivity extends AppCompatActivity {
         // Recargar si se volvió de settings
         loadUrl();
         updateStatusPill();
+        // Actualizar visibilidad de pill por si cambió en settings
+        statusPill.setVisibility(prefs.getBoolean("show_status_pill", true) ? View.VISIBLE : View.GONE);
     }
 
     @Override
