@@ -176,7 +176,8 @@ public class MainActivity extends AppCompatActivity {
         String ip = getIpForCurrentNetwork();
         String port = prefs.getString("server_port", DEFAULT_PORT);
         String protocol = prefs.getString("server_protocol", "http");
-        String url = protocol + "://" + ip + ":" + port;
+        String path = prefs.getString("server_path", "");
+        String url = protocol + "://" + ip + ":" + port + path;
 
         webView.setVisibility(View.VISIBLE);
         errorLayout.setVisibility(View.GONE);

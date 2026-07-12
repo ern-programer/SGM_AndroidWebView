@@ -72,6 +72,19 @@
         android:textColorHint="#666666"
         android:textSize="15sp" />
 
+    <EditText
+        android:id="@+id/editPath"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="#16213e"
+        android:hint="Ruta o parámetros (ej: /admin o ?token=ABC)"
+        android:inputType="textUri"
+        android:padding="14dp"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#666666"
+        android:textSize="15sp" />
+
     <!-- Protocolo HTTP/HTTPS -->
     <LinearLayout
         android:layout_width="match_parent"

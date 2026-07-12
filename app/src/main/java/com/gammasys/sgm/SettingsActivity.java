@@ -18,7 +18,7 @@ import org.json.JSONObject;
 
 public class SettingsActivity extends AppCompatActivity {
 
-    private EditText editIp, editPort;
+    private EditText editIp, editPort, editPath;
     private Switch switchProtocol, switchPill;
     private TextView textSsid;
     private SharedPreferences prefs;
@@ -36,6 +36,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         editIp = findViewById(R.id.editIp);
         editPort = findViewById(R.id.editPort);
+        editPath = findViewById(R.id.editPath);
         switchProtocol = findViewById(R.id.switchProtocol);
         switchPill = findViewById(R.id.switchPill);
         textSsid = findViewById(R.id.textSsid);
@@ -54,12 +55,14 @@ public class SettingsActivity extends AppCompatActivity {
         String ip = getIpForSsid(currentSsid);
         editIp.setText(ip);
         editPort.setText(prefs.getString("server_port", DEFAULT_PORT));
+        editPath.setText(prefs.getString("server_path", ""));
         switchProtocol.setChecked(prefs.getString("server_protocol", "http").equals("https"));
         switchPill.setChecked(prefs.getBoolean("show_status_pill", true));
 
         btnSave.setOnClickListener(v -> {
             String newIp = editIp.getText().toString().trim();
             String port = editPort.getText().toString().trim();
+            String path = editPath.getText().toString().trim();
 
             if (newIp.isEmpty()) {
                 editIp.setError("Ingrese la IP del servidor");
@@ -83,6 +86,7 @@ public class SettingsActivity extends AppCompatActivity {
                 .putString("server_ip", newIp)
                 .putString("server_port", port)
                 .putString("server_protocol", protocol)
+                .putString("server_path", path)
                 .putBoolean("show_status_pill", showPill)
                 .apply();
 
@@ -93,6 +97,7 @@ public class SettingsActivity extends AppCompatActivity {
         btnDefault.setOnClickListener(v -> {
             editIp.setText(DEFAULT_IP);
             editPort.setText(DEFAULT_PORT);
+            editPath.setText("");
             switchProtocol.setChecked(false);
             switchPill.setChecked(true);
         });
