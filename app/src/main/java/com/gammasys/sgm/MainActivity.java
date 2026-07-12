@@ -14,6 +14,8 @@ import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
@@ -45,8 +47,10 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private TextView errorText;
     private SwipeRefreshLayout swipeRefresh;
-    private TextView batteryPill;
+    private TextView statusPill;
     private SharedPreferences prefs;
+    private Handler clockHandler;
+    private Runnable clockRunnable;
 
     private static final String DEFAULT_IP = "192.168.0.113";
     private static final String DEFAULT_PORT = "3000";
@@ -71,9 +75,20 @@ public class MainActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
         errorText = findViewById(R.id.errorText);
         swipeRefresh = findViewById(R.id.swipeRefresh);
-        batteryPill = findViewById(R.id.batteryPill);
+        statusPill = findViewById(R.id.statusPill);
 
-        updateBattery();
+        updateStatusPill();
+
+        // Actualizar hora cada 30 segundos
+        clockHandler = new Handler(Looper.getMainLooper());
+        clockRunnable = new Runnable() {
+            @Override
+            public void run() {
+                updateStatusPill();
+                clockHandler.postDelayed(this, 30000);
+            }
+        };
+        clockHandler.postDelayed(clockRunnable, 30000);
 
         Button btnRetry = findViewById(R.id.btnRetry);
         Button btnSettings = findViewById(R.id.btnSettings);
@@ -254,12 +269,20 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         // Recargar si se volvió de settings
         loadUrl();
-        updateBattery();
+        updateStatusPill();
     }
 
-    private void updateBattery() {
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (clockHandler != null) clockHandler.removeCallbacks(clockRunnable);
+    }
+
+    private void updateStatusPill() {
+        // Batería
         IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         Intent batteryStatus = registerReceiver(null, filter);
+        String battText = "";
         if (batteryStatus != null) {
             int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
             int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
@@ -267,8 +290,15 @@ public class MainActivity extends AppCompatActivity {
             int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
             boolean charging = status == BatteryManager.BATTERY_STATUS_CHARGING
                     || status == BatteryManager.BATTERY_STATUS_FULL;
-            String icon = charging ? "⚡" : (pct > 50 ? "🔋" : (pct > 20 ? "🪫" : "🪫"));
-            batteryPill.setText(icon + " " + pct + "%");
+            String icon = charging ? "⚡" : (pct > 20 ? "🔋" : "🪫");
+            battText = icon + " " + pct + "%";
         }
+
+        // Fecha y hora
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM HH:mm",
+                java.util.Locale.getDefault());
+        String dateTime = sdf.format(new java.util.Date());
+
+        statusPill.setText(battText + "  •  " + dateTime);
     }
 }

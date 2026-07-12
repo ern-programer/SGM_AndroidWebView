@@ -17,14 +17,14 @@
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-    <!-- Battery pill (top left) -->
+    <!-- Status pill (top right) - battery + date/time -->
     <TextView
-        android:id="@+id/batteryPill"
+        android:id="@+id/statusPill"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginStart="12dp"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="12dp"
         android:layout_marginTop="12dp"
         android:alpha="0.6"
         android:background="@drawable/pill_bg"
