@@ -16,6 +16,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
@@ -78,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
         statusPill = findViewById(R.id.statusPill);
 
         updateStatusPill();
+        setupDraggablePill();
 
         // Actualizar hora cada 30 segundos
         clockHandler = new Handler(Looper.getMainLooper());
@@ -276,6 +278,60 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         if (clockHandler != null) clockHandler.removeCallbacks(clockRunnable);
+    }
+
+    private void setupDraggablePill() {
+        final float[] downX = new float[1];
+        final float[] downY = new float[1];
+        final float[] transX = new float[1];
+        final float[] transY = new float[1];
+        final boolean[] dragging = {false};
+
+        statusPill.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    downX[0] = event.getRawX();
+                    downY[0] = event.getRawY();
+                    transX[0] = v.getTranslationX();
+                    transY[0] = v.getTranslationY();
+                    dragging[0] = false;
+                    return true;
+
+                case MotionEvent.ACTION_MOVE:
+                    float dx = event.getRawX() - downX[0];
+                    float dy = event.getRawY() - downY[0];
+                    // Umbral de 10px para distinguir tap de drag
+                    if (!dragging[0] && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+                        dragging[0] = true;
+                        // Evitar que SwipeRefreshLayout intercepte el toque
+                        v.getParent().requestDisallowInterceptTouchEvent(true);
+                    }
+                    if (dragging[0]) {
+                        v.setTranslationX(transX[0] + dx);
+                        v.setTranslationY(transY[0] + dy);
+                    }
+                    return true;
+
+                case MotionEvent.ACTION_UP:
+                    if (dragging[0]) {
+                        // Guardar posición para persistirla
+                        prefs.edit()
+                            .putFloat("pill_transX", v.getTranslationX())
+                            .putFloat("pill_transY", v.getTranslationY())
+                            .apply();
+                    }
+                    v.getParent().requestDisallowInterceptTouchEvent(false);
+                    dragging[0] = false;
+                    return true;
+            }
+            return false;
+        });
+
+        // Restaurar posición guardada
+        float savedX = prefs.getFloat("pill_transX", 0f);
+        float savedY = prefs.getFloat("pill_transY", 0f);
+        statusPill.setTranslationX(savedX);
+        statusPill.setTranslationY(savedY);
     }
 
     private void updateStatusPill() {
